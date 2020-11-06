@@ -6,6 +6,7 @@
 #include "memlayout.h"
 #include "spinlock.h"
 #include "proc.h"
+#include "time.h"
 
 uint64
 sys_exit(void)
@@ -94,4 +95,26 @@ sys_uptime(void)
   xticks = ticks;
   release(&tickslock);
   return xticks;
+}
+
+uint64
+sys_gettimeofday(void)
+{
+  uint64 tv_addr;
+  if(argaddr(0, &tv_addr) < 0)
+    return -1;
+
+  uint ticks_;
+  acquire(&tickslock);
+  ticks_ = ticks;
+  release(&tickslock);
+
+  struct timeval tv;
+  tv.tv_sec = ticks_ / 10;
+  tv.tv_usec = (ticks_ % 10) * 100000;
+
+  if(copyout(myproc()->pagetable, tv_addr, (char *)&tv, sizeof(tv)) < 0)
+    return -1;
+
+  return 0;
 }

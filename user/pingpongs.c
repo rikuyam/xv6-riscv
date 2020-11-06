@@ -5,18 +5,20 @@
 #include "kernel/types.h"
 #include "kernel/stat.h"
 #include "user/user.h"
+#include "kernel/time.h"
 
 int main(int argc, char *argv[]) {
     if (argc != 2) {
-        fprintf(1, "usage: %s N\n", argv[0]);
+        printf("usage: %s N\n", argv[0]);
         exit(1);
     }
 
     // # of rounds
     int n = atoi(argv[1]);
 
-    // tick value before starting rounds
-    int start_tick = uptime();
+    // time value before starting rounds
+    struct timeval start_time;
+    gettimeofday(&start_time);
 
     int c2p[2]; pipe(c2p); // child to parent
     int p2c[2]; pipe(p2c); // parent to child
@@ -57,7 +59,11 @@ int main(int argc, char *argv[]) {
         wait(0);
     }
 
-    // print # of ticks in nrouds
-    printf("# of ticks in %d rounds: %d\n", n, uptime() - start_tick);
+    // time value after starting rounds
+    struct timeval end_time;
+    gettimeofday(&end_time);
+
+    // print # of usec in nrouds
+    printf("# of sec in %d rounds: %d.%d\n", n, (end_time.tv_sec - start_time.tv_sec),(end_time.tv_usec - start_time.tv_usec + 1000000) % 1000000 / 100000);
     exit(0);
 }
